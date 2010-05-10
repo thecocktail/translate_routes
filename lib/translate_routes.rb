@@ -8,7 +8,7 @@ module ActionController
     module Translator
       
       mattr_accessor :prefix_on_default_locale
-      @@prefix_on_default_locale = false
+      @@prefix_on_default_locale = true
 
       mattr_accessor :locale_param_key
       @@locale_param_key = :locale  # set to :locale for params[:locale]
