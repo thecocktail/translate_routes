@@ -26,13 +26,15 @@ module ActionController
         init_dictionaries
         path = %w(locales routes.yml) if path.blank?
         file_path =  File.join(RAILS_ROOT, path)
-        yaml = YAML.load_file(file_path)
-        yaml.each_pair do |k,v|
-          if k == 'excluded_prefixes'
-            @@excluded_prefixes = v.split(',').map {|n| n.strip.to_sym}
-          else
-            @@dictionaries[k.to_s] = v || {}
-          end
+        self.load_yaml file_path
+        @using_i18n = false
+        Translator.translate_current_routes
+      end
+
+      def self.translate_from_files(*file_paths)
+        init_dictionaries
+        file_paths.each do |file_path|
+          self.load_yaml file_path
         end
         @using_i18n = false
         Translator.translate_current_routes
@@ -202,6 +204,17 @@ module ActionController
             new_named_routes["#{route_name}_#{locale_suffix}".to_sym] = translated if route_name
           end
           [new_routes, new_named_routes]
+        end
+
+        def self.load_yaml(file_path)
+          yaml = YAML.load_file(file_path)
+          yaml.each_pair do |k,v|
+            if k == 'excluded_prefixes'
+              @@excluded_prefixes = v.split(',').map {|n| n.strip.to_sym}
+            else
+              @@dictionaries[k.to_s] = v || {}
+            end
+          end
         end
       
     end
