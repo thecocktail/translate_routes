@@ -27,7 +27,13 @@ module ActionController
         path = %w(locales routes.yml) if path.blank?
         file_path =  File.join(RAILS_ROOT, path)
         yaml = YAML.load_file(file_path)
-        yaml.each_pair{ |k,v| @@dictionaries[k.to_s] = v || {} }
+        yaml.each_pair do |k,v|
+          if k == 'excluded_prefixes'
+            @@excluded_prefixes = v.split(',').map {|n| n.strip.to_sym}
+          else
+            @@dictionaries[k.to_s] = v || {}
+          end
+        end
         @using_i18n = false
         Translator.translate_current_routes
       end
@@ -48,6 +54,7 @@ module ActionController
 
         def self.init_dictionaries
           @@dictionaries = { default_locale => {} }
+          @@excluded_prefixes = []
         end
 
         def self.available_locales
@@ -88,17 +95,20 @@ module ActionController
           new_named_routes = {}
 
           @@original_routes.each do |old_route|
-
-            old_name = @@original_named_routes.index(old_route)
-            # process and add the translated ones
-            trans_routes, trans_named_routes = translate_route(old_route, old_name)
-
-            if old_name
-              new_named_routes.merge! trans_named_routes
-            end
-
-            new_routes.concat(trans_routes)
-          
+            if old_route.segments[1].respond_to?(:value) and
+               @@excluded_prefixes.include?(old_route.segments[1].value.to_sym)
+              new_routes.concat([old_route])
+            else
+              old_name = @@original_named_routes.index(old_route)
+              # process and add the translated ones
+              trans_routes, trans_named_routes = translate_route(old_route, old_name)
+  
+              if old_name
+                new_named_routes.merge! trans_named_routes
+              end
+  
+              new_routes.concat(trans_routes)
+            end 
           end
         
           Routes.routes = new_routes

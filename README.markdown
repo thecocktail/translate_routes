@@ -30,6 +30,9 @@ Let's start with a tiny example. Of course you need to define your routes first,
     es:
       contact: contacto
 
+2.1) If you don't want to translate the routes that begin with a specific prefix, use the "excluded_prefixes" in your YAML to define them (separate them with commas if you want to exclude more than one prefix):
+
+    excluded_prefixes: api, app
 
 3) Append a line to your routes.rb file to activate the translations. If you loaded the translations file with
 your other I18n translations files, the line will be:

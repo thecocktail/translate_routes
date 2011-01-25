@@ -279,6 +279,26 @@ class TranslateRoutesTest < ActionController::TestCase
     ActionView::Base.instance_methods.include?('locale_suffix')
   end
 
+  def test_excluded_namespace_from_file
+    ActionController::Routing::Routes.draw { |map| map.people '/api/people', :controller => 'people', :action => 'index'}
+    ActionController::Routing::Routes.draw { |map| map.people '/app/people', :controller => 'people', :action => 'show'}
+    config_default_locale_settings('es', false)
+    ActionController::Routing::Translator.translate_from_file 'test', 'locales', 'routes.yml'
+
+    assert_routing '/api/people', :controller => 'people', :action => 'index'
+    assert_routing '/app/people', :controller => 'people', :action => 'show'
+  end
+
+  def test_excluded_namespace_from_file_with_prefix
+    ActionController::Routing::Routes.draw { |map| map.people '/api/people', :controller => 'people', :action => 'index'}
+    ActionController::Routing::Routes.draw { |map| map.people '/app/people', :controller => 'people', :action => 'show'}
+    config_default_locale_settings('es', true)
+    ActionController::Routing::Translator.translate_from_file 'test', 'locales', 'routes.yml'
+
+    assert_routing '/api/people', :controller => 'people', :action => 'index'
+    assert_routing '/app/people', :controller => 'people', :action => 'show'
+  end
+
   private
   
   def assert_helpers_include(*helpers)

@@ -1,3 +1,4 @@
+excluded_prefixes: api, app
 es:
   people: gente
   
