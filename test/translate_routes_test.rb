@@ -1,7 +1,7 @@
 require 'test/unit'
 require 'rubygems'
 
-%w(actionpack activesupport actionmailer).each{ |gem_lib| gem gem_lib, '2.3.2' }
+%w(actionpack activesupport actionmailer).each{ |gem_lib| gem gem_lib, '2.3.5' }
 %w(activesupport actionpack actionmailer action_controller).each{ |lib| require lib }
 
 plugin_root = File.join(File.dirname(__FILE__), '..')
@@ -287,6 +287,8 @@ class TranslateRoutesTest < ActionController::TestCase
 
     assert_routing '/api/people', :controller => 'people', :action => 'index'
     assert_routing '/app/people', :controller => 'people', :action => 'show'
+    assert_helpers_include :people
+    assert_helpers_do_not_include :people_es
   end
 
   def test_excluded_namespace_from_file_with_prefix
@@ -297,6 +299,8 @@ class TranslateRoutesTest < ActionController::TestCase
 
     assert_routing '/api/people', :controller => 'people', :action => 'index'
     assert_routing '/app/people', :controller => 'people', :action => 'show'
+    assert_helpers_include :people
+    assert_helpers_do_not_include :people_es
   end
 
   def test_languages_load_from_files
@@ -313,13 +317,22 @@ class TranslateRoutesTest < ActionController::TestCase
   private
   
   def assert_helpers_include(*helpers)
-    helpers.each do |helper|
-      ['_url', '_path'].each do |suffix|    
-        [@controller, @view].each { |obj| assert_respond_to obj, "#{helper}#{suffix}".to_sym }
-      end
-    end
+    assert helpers_include?(*helpers)
   end
   
+  def assert_helpers_do_not_include(*helpers)
+    assert !helpers_include?(*helpers)
+  end
+
+  def helpers_include?(*helpers)
+    helpers.each do |helper|
+      ['_url', '_path'].each do |suffix|    
+        [@controller, @view].each { |obj| return false unless obj.respond_to? "#{helper}#{suffix}".to_sym }
+      end
+    end
+    return true
+  end
+
   def assert_unrecognized_route(route_path, options)
     assert_raise ActionController::RoutingError do
       assert_routing route_path, options

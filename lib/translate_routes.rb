@@ -97,18 +97,15 @@ module ActionController
           new_named_routes = {}
 
           @@original_routes.each do |old_route|
+            old_name = @@original_named_routes.index(old_route)
             if old_route.segments[1].respond_to?(:value) and
                @@excluded_prefixes.include?(old_route.segments[1].value.to_sym)
+              new_named_routes[old_name] = old_route if old_name
               new_routes.concat([old_route])
             else
-              old_name = @@original_named_routes.index(old_route)
               # process and add the translated ones
               trans_routes, trans_named_routes = translate_route(old_route, old_name)
-  
-              if old_name
-                new_named_routes.merge! trans_named_routes
-              end
-  
+              new_named_routes.merge! trans_named_routes if old_name
               new_routes.concat(trans_routes)
             end 
           end
@@ -121,17 +118,18 @@ module ActionController
 
         # The untranslated helper (root_path instead root_en_path) redirects according to the current locale
         def self.add_untranslated_helpers_to_controllers_and_views(old_name)
-          
-          ['path', 'url'].each do |suffix|
-            new_helper_name = "#{old_name}_#{suffix}"
-            def_new_helper = <<-DEF_NEW_HELPER
-              def #{new_helper_name}(*args)
-                send("#{old_name}_\#{locale_suffix(I18n.locale)}_#{suffix}", *args)
-              end
-            DEF_NEW_HELPER
+          unless @@excluded_prefixes.include?(old_name.to_s[/^([^_])/].to_sym)
+            ['path', 'url'].each do |suffix|
+              new_helper_name = "#{old_name}_#{suffix}"
+              def_new_helper = <<-DEF_NEW_HELPER
+                def #{new_helper_name}(*args)
+                  send("#{old_name}_\#{locale_suffix(I18n.locale)}_#{suffix}", *args)
+                end
+              DEF_NEW_HELPER
 
-            [ActionController::Base, ActionView::Base, ActionMailer::Base].each { |d| d.module_eval(def_new_helper) }
-            ActionController::Routing::Routes.named_routes.helpers << new_helper_name.to_sym
+              [ActionController::Base, ActionView::Base, ActionMailer::Base].each { |d| d.module_eval(def_new_helper) }
+              ActionController::Routing::Routes.named_routes.helpers << new_helper_name.to_sym
+            end
           end
         end
 
