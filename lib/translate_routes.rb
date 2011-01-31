@@ -118,7 +118,7 @@ module ActionController
 
         # The untranslated helper (root_path instead root_en_path) redirects according to the current locale
         def self.add_untranslated_helpers_to_controllers_and_views(old_name)
-          unless @@excluded_prefixes.include?(old_name.to_s[/^([^_])/].to_sym)
+          unless @@excluded_prefixes.include?(old_name.to_s[/^([^_]+)/].to_sym)
             ['path', 'url'].each do |suffix|
               new_helper_name = "#{old_name}_#{suffix}"
               def_new_helper = <<-DEF_NEW_HELPER

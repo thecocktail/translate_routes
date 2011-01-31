@@ -1,6 +1,7 @@
 excluded_prefixes: api, app
 es:
   people: gente
+  crowd: multitud
   
 en:
   

@@ -280,27 +280,11 @@ class TranslateRoutesTest < ActionController::TestCase
   end
 
   def test_excluded_namespace_from_file
-    ActionController::Routing::Routes.draw { |map| map.people '/api/people', :controller => 'people', :action => 'index'}
-    ActionController::Routing::Routes.draw { |map| map.people '/app/people', :controller => 'people', :action => 'show'}
-    config_default_locale_settings('es', false)
-    ActionController::Routing::Translator.translate_from_file 'test', 'locales', 'routes.yml'
-
-    assert_routing '/api/people', :controller => 'people', :action => 'index'
-    assert_routing '/app/people', :controller => 'people', :action => 'show'
-    assert_helpers_include :people
-    assert_helpers_do_not_include :people_es
+    meta_test_excluded_namespace_from_file false
   end
 
   def test_excluded_namespace_from_file_with_prefix
-    ActionController::Routing::Routes.draw { |map| map.people '/api/people', :controller => 'people', :action => 'index'}
-    ActionController::Routing::Routes.draw { |map| map.people '/app/people', :controller => 'people', :action => 'show'}
-    config_default_locale_settings('es', true)
-    ActionController::Routing::Translator.translate_from_file 'test', 'locales', 'routes.yml'
-
-    assert_routing '/api/people', :controller => 'people', :action => 'index'
-    assert_routing '/app/people', :controller => 'people', :action => 'show'
-    assert_helpers_include :people
-    assert_helpers_do_not_include :people_es
+    meta_test_excluded_namespace_from_file true
   end
 
   def test_languages_load_from_files
@@ -316,6 +300,20 @@ class TranslateRoutesTest < ActionController::TestCase
 
   private
   
+  def meta_test_excluded_namespace_from_file(with_prefix)
+    ActionController::Routing::Routes.draw { |map|
+      map.crowd '/crowd', :controller => 'people', :action => 'croud'
+      map.api_people '/api/people', :controller => 'people', :action => 'index'
+      map.app_person '/app/people', :controller => 'people', :action => 'show'
+    }
+    config_default_locale_settings('es', with_prefix)
+    ActionController::Routing::Translator.translate_from_file 'test', 'locales', 'routes.yml'
+    assert_routing '/api/people', :controller => 'people', :action => 'index'
+    assert_routing '/app/people', :controller => 'people', :action => 'show'
+    assert_helpers_include :api_people, :app_person, :crowd_es
+    assert_helpers_do_not_include :api_people_es, :app_person_es
+  end
+
   def assert_helpers_include(*helpers)
     assert helpers_include?(*helpers)
   end
