@@ -9,6 +9,7 @@ require "#{plugin_root}/lib/translate_routes"
 RAILS_ROOT = plugin_root
 
 class PeopleController < ActionController::Base;  end
+class DeitiesController < ActionController::Base;  end
 
 class TranslateRoutesTest < ActionController::TestCase
 
@@ -288,12 +289,16 @@ class TranslateRoutesTest < ActionController::TestCase
   end
 
   def test_languages_load_from_files
-    ActionController::Routing::Routes.draw { |map| map.people 'people', :controller => 'people', :action => 'index'}
+    ActionController::Routing::Routes.draw { |map| 
+      map.people 'people', :controller => 'people', :action => 'index'
+      map.deities 'deities', :controller => 'deities', :action => 'index'
+    }
     config_default_locale_settings('en', false)
-    ActionController::Routing::Translator.translate_from_files 'test/locales/routes.yml', 'test/locales/routes_it.yml'
+    ActionController::Routing::Translator.translate_from_files 'test/locales/routes.yml', 'test/locales/routes_it.yml', 'test/locales/routes2.yml'
     
     assert_routing '/people', :controller => 'people', :action => 'index', :locale => 'en'
     assert_routing '/es/gente', :controller => 'people', :action => 'index', :locale => 'es'
+    assert_routing '/es/divinidades', :controller => 'deities', :action => 'index', :locale => 'es'
     assert_routing '/it/persone', :controller => 'people', :action => 'index', :locale => 'it'
     assert_helpers_include :people_it, :people_en, :people_es, :people
   end

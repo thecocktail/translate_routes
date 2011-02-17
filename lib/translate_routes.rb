@@ -210,7 +210,11 @@ module ActionController
             if k == 'excluded_prefixes'
               @@excluded_prefixes = v.split(',').map {|n| n.strip.to_sym}
             else
-              @@dictionaries[k.to_s] = v || {}
+              if @@dictionaries[k.to_s] && v
+                @@dictionaries[k.to_s] = @@dictionaries[k.to_s].merge(v)
+              else
+                @@dictionaries[k.to_s] = v || {}
+              end
             end
           end
         end
