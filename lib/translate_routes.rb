@@ -15,6 +15,9 @@ module ActionController
 
       mattr_accessor :original_routes, :original_named_routes, :original_names, :dictionaries
 
+      mattr_accessor :default_locale_for_routes
+      @@default_locale_for_routes = nil
+
       def self.translate
         init_dictionaries
         yield @@dictionaries
@@ -51,7 +54,7 @@ module ActionController
       private
 
         def self.default_locale
-          I18n.default_locale.to_s
+          (@@default_locale_for_routes || I18n.default_locale).to_s
         end
 
         def self.init_dictionaries
