@@ -94,6 +94,7 @@ module ActionController
           @@original_routes = Routes.routes.dup                     # Array [routeA, routeB, ...]
           @@original_named_routes = Routes.named_routes.routes.dup  # Hash {:name => :route}
           @@original_names = @@original_named_routes.keys
+          @@excluded_names = []
           
           Routes.clear!
           new_routes = []
@@ -102,17 +103,19 @@ module ActionController
           @@original_routes.each do |old_route|
             old_name = @@original_named_routes.index(old_route)
             if old_route.segments[1].respond_to?(:value) and
-               @@excluded_prefixes.include?(old_route.segments[1].value.to_sym)
+              @@excluded_prefixes.include?(old_route.segments[1].value.to_sym)
+              @@excluded_names << old_name
               new_named_routes[old_name] = old_route if old_name
               new_routes.concat([old_route])
             else
               # process and add the translated ones
+              
               trans_routes, trans_named_routes = translate_route(old_route, old_name)
               new_named_routes.merge! trans_named_routes if old_name
               new_routes.concat(trans_routes)
             end 
           end
-        
+
           Routes.routes = new_routes
           new_named_routes.each { |name, r| Routes.named_routes.add name, r }
           
@@ -121,7 +124,10 @@ module ActionController
 
         # The untranslated helper (root_path instead root_en_path) redirects according to the current locale
         def self.add_untranslated_helpers_to_controllers_and_views(old_name)
-          unless @@excluded_prefixes.include?(old_name.to_s[/^([^_]+)/].to_sym)
+          # verificar exclusion del nombre de la ruta en @@excluded_names
+          # @@exclude_prefixesno contiene nombres de rutas, sino prefijos excluidos. 
+          # @@excluded_names contiene los nombres de las rutas que tienen un prefijo excluido indicado en @@excluded_prefixes
+          unless @@excluded_names.include? old_name #@@excluded_prefixes.include?(old_name.to_s[/^([^_]+)/].to_sym)
             ['path', 'url'].each do |suffix|
               new_helper_name = "#{old_name}_#{suffix}"
               def_new_helper = <<-DEF_NEW_HELPER
